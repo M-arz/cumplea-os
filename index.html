@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>¡Feliz Cumpleaños, Mi Amor!</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Cormorant Garamond (elegante), Dancing Script (manuscrita) e Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#FFFBF7',
+            blush: '#FCEEF0',
+            petal: '#F8D7DC',
+            rosegold: '#D48C95',
+            rosegoldDark: '#B86B77',
+            burgundy: '#4A1E28',
+            burgundyLight: '#733846',
+          },
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+            script: ['"Dancing Script"', 'cursive'],
+            sans: ['"Inter"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Estilos personalizados para animaciones suaves y tarjetas 3D */
+    body {
+      background-color: #FFFBF7;
+      color: #4A1E28;
+      overflow-x: hidden;
+    }
+
+    /* Corazones flotantes de fondo */
+    @keyframes floatUp {
+      0% {
+        transform: translateY(100vh) scale(0.6) rotate(0deg);
+        opacity: 0;
+      }
+      15% {
+        opacity: 0.45;
+      }
+      85% {
+        opacity: 0.35;
+      }
+      100% {
+        transform: translateY(-15vh) scale(1.1) rotate(25deg);
+        opacity: 0;
+      }
+    }
+
+    .floating-heart {
+      position: fixed;
+      bottom: -10vh;
+      pointer-events: none;
+      z-index: 0;
+      animation: floatUp linear infinite;
+    }
+
+    /* Efecto Polaroid */
+    .polaroid-card {
+      background: #ffffff;
+      padding: 12px 12px 24px 12px;
+      box-shadow: 0 12px 30px -8px rgba(74, 30, 40, 0.12), 0 4px 10px -2px rgba(74, 30, 40, 0.06);
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+    }
+
+    .polaroid-card:hover {
+      transform: translateY(-6px) rotate(0deg) !important;
+      box-shadow: 0 20px 40px -10px rgba(74, 30, 40, 0.18);
+    }
+
+    /* Flip cards para Razones por las que te amo */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .flip-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+    .flip-card.flipped .flip-card-inner {
+      transform: rotateY(180deg);
+    }
+    .flip-card-front, .flip-card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      border-radius: 1.25rem;
+    }
+    .flip-card-back {
+      transform: rotateY(180deg);
+    }
+
+    /* Animación de entrada por scroll */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Indicador visual sutil cuando Modo Edición está activo */
+    body.edit-mode [contenteditable="true"] {
+      outline: 2px dashed #D48C95;
+      outline-offset: 4px;
+      border-radius: 6px;
+      background-color: rgba(252, 238, 240, 0.55);
+      cursor: text;
+    }
+    body.edit-mode [contenteditable="true"]:focus {
+      outline: 2px solid #B86B77;
+      background-color: #ffffff;
+    }
+
+    /* Sobre de carta interactivo */
+    .envelope-flap {
+      transform-origin: top;
+      transition: transform 0.6s ease-in-out, z-index 0.3s;
+    }
+    .envelope-open .envelope-flap {
+      transform: rotateX(180deg);
+      z-index: 0;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased selection:bg-petal selection:text-burgundy">
+
+  <!-- Contenedor de corazones flotantes -->
+  <div id="hearts-container" aria-hidden="true"></div>
+
+  <!-- Reproducción de la canción especial -->
+  <div id="music-player" class="fixed bottom-5 left-5 z-40">
+    <button id="music-toggle" type="button" onclick="toggleMusic()" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/90 backdrop-blur-md border border-petal shadow-lg text-burgundy text-xs sm:text-sm font-medium hover:bg-blush transition-all active:scale-95">
+      <i id="music-icon" data-lucide="music" class="w-4 h-4 text-rosegoldDark"></i>
+      <span id="music-label">Reproducir nuestra canción</span>
+    </button>
+    <audio id="birthday-song" src="tu jardin.mp4" loop preload="auto"></audio>
+  </div>
+
+  <!-- Notificación Toast (reemplaza alert) -->
+  <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-burgundy text-cream px-5 py-3 rounded-full shadow-xl text-sm font-medium opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2">
+    <i data-lucide="sparkles" class="w-4 h-4 text-petal"></i>
+    <span id="toast-message">Mensaje actualizado</span>
+  </div>
+
+  <!-- Barra flotante discreta de Modo Edición (Abajo a la derecha) -->
+  <div class="fixed bottom-5 right-5 z-40 flex items-center gap-2">
+    <button id="toggle-edit-btn" onclick="toggleEditMode()" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/90 backdrop-blur-md border border-petal shadow-lg text-burgundy text-xs sm:text-sm font-medium hover:bg-blush transition-all active:scale-95">
+      <i data-lucide="pen-line" class="w-4 h-4 text-rosegoldDark"></i>
+      <span id="edit-btn-label">Personalizar página</span>
+    </button>
+  </div>
+
+  <!-- Banner superior de ayuda cuando Modo Edición está encendido -->
+  <div id="edit-banner" class="hidden sticky top-0 z-40 bg-burgundy text-cream px-4 py-2.5 text-center text-xs sm:text-sm shadow-md">
+    <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-3">
+      <span>✨ <strong>Modo Edición activo:</strong> Haz clic en cualquier texto para editarlo.</span>
+      <button onclick="toggleEditMode()" class="bg-rosegold text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-rosegoldDark transition">
+        Listo (Ocultar controles)
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== 1. SECCIÓN HERO ==================== -->
+  <header class="relative min-h-[92vh] flex flex-col items-center justify-center text-center px-5 py-16 overflow-hidden">
+    <!-- Halo decorativo suave -->
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[540px] sm:h-[540px] bg-gradient-to-tr from-petal/50 via-blush/60 to-transparent rounded-full blur-3xl -z-10"></div>
+
+    <div class="max-w-3xl mx-auto space-y-6 z-10">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blush border border-petal/80 text-rosegoldDark text-xs sm:text-sm tracking-widest uppercase font-medium shadow-sm">
+        <i data-lucide="heart" class="w-3.5 h-3.5 fill-rosegold text-rosegold"></i>
+        <span id="hero-badge" contenteditable="false">Hoy celebramos tu vida</span>
+      </div>
+
+      <h1 class="font-serif text-5xl sm:text-7xl md:text-8xl font-bold text-burgundy leading-[1.08] tracking-tight">
+        <span id="hero-title" contenteditable="false">¡Feliz Cumpleaños,</span>
+        <span id="hero-name" contenteditable="false" class="block font-script text-6xl sm:text-8xl text-rosegoldDark mt-2">Mi Amor!</span>
+      </h1>
+
+      <p id="hero-subtitle" contenteditable="false" class="max-w-xl mx-auto text-base sm:text-lg text-burgundyLight/90 font-light leading-relaxed px-2">
+        Un pequeño rincón hecho con todo mi corazón para recordarte lo increíble que eres y celebrar cada instante a tu lado.
+      </p>
+
+      <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+        <button onclick="launchCelebration()" class="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-rosegoldDark to-rosegold text-white font-medium shadow-lg shadow-rosegold/30 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2.5 active:scale-95">
+          <i data-lucide="sparkles" class="w-5 h-5"></i>
+          <span>¡Celebrar tu día!</span>
+        </button>
+
+        <a href="#recuerdos" class="w-full sm:w-auto px-7 py-4 rounded-full bg-white/80 backdrop-blur-sm border border-petal text-burgundy font-medium hover:bg-blush transition-all flex items-center justify-center gap-2">
+          <span>Ver nuestros recuerdos</span>
+          <i data-lucide="arrow-down" class="w-4 h-4 text-rosegoldDark"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 2. GALERÍA DE RECUERDOS ==================== -->
+  <section id="recuerdos" class="relative py-20 px-4 sm:px-8 max-w-6xl mx-auto z-10">
+    <div class="text-center max-w-2xl mx-auto mb-12 reveal">
+      <span class="font-script text-3xl text-rosegoldDark">Nuestros momentos</span>
+      <h2 id="gallery-heading" contenteditable="false" class="font-serif text-3xl sm:text-5xl font-bold text-burgundy mt-1">
+        Cada foto guarda una sonrisa contigo
+      </h2>
+      <p id="gallery-subheading" contenteditable="false" class="text-burgundyLight/85 text-sm sm:text-base mt-3">
+        Pequeños instantes que se convirtieron en mis recuerdos favoritos.
+      </p>
+    </div>
+
+    <!-- Grid estilo Polaroid -->
+    <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-7 sm:gap-8 max-w-3xl mx-auto">
+      <!-- Las tarjetas se renderizan dinámicamente con JS -->
+    </div>
+  </section>
+
+  <!-- ==================== 3. CARTA DE CUMPLEAÑOS INTERACTIVA ==================== -->
+  <section id="carta" class="relative py-20 px-4 sm:px-8 bg-gradient-to-b from-cream via-blush/60 to-cream z-10">
+    <div class="max-w-3xl mx-auto reveal">
+      <div class="text-center mb-10">
+        <span class="font-script text-3xl text-rosegoldDark">De mi corazón para ti</span>
+        <h2 class="font-serif text-3xl sm:text-5xl font-bold text-burgundy mt-1">Una carta en tu día</h2>
+      </div>
+
+      <!-- Sobre cerrado / Vista previa -->
+      <div id="envelope-closed" onclick="openLetter()" class="cursor-pointer max-w-lg mx-auto bg-white border border-petal rounded-3xl p-8 sm:p-12 text-center shadow-xl shadow-rosegold/10 hover:shadow-2xl hover:-translate-y-1 transition-all group relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-petal via-rosegold to-petal"></div>
+        
+        <div class="w-16 h-16 rounded-full bg-blush border border-petal mx-auto flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+          <i data-lucide="mail-heart" class="w-8 h-8 text-rosegoldDark"></i>
+        </div>
+
+        <p class="font-serif italic text-xl sm:text-2xl text-burgundy mb-2">Para la persona que ilumina mis días</p>
+        <p class="text-xs sm:text-sm text-burgundyLight/80 mb-6">Toca el sobre para abrir tu carta de cumpleaños</p>
+
+        <span class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-blush text-burgundy text-sm font-medium group-hover:bg-rosegold group-hover:text-white transition-colors">
+          <span>Abrir carta</span>
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+        </span>
+      </div>
+
+      <!-- Carta abierta -->
+      <div id="letter-opened" class="hidden max-w-2xl mx-auto bg-white border border-petal/90 rounded-3xl p-7 sm:p-12 shadow-2xl shadow-burgundy/10 relative transition-all">
+        <!-- Detalle sello dorado/rosa -->
+        <div class="flex items-center justify-between border-b border-petal/60 pb-5 mb-6">
+          <div class="flex items-center gap-2 text-rosegoldDark">
+            <i data-lucide="heart" class="w-5 h-5 fill-rosegold text-rosegold"></i>
+            <span id="letter-date" contenteditable="false" class="text-xs sm:text-sm uppercase tracking-widest font-medium">En tu cumpleaños</span>
+          </div>
+          <button onclick="closeLetter()" class="text-xs text-burgundyLight hover:text-burgundy flex items-center gap-1 px-2.5 py-1 rounded-full hover:bg-blush transition">
+            <i data-lucide="minimize-2" class="w-3.5 h-3.5"></i>
+            <span>Cerrar</span>
+          </button>
+        </div>
+
+        <div class="space-y-5 font-serif text-lg sm:text-xl text-burgundy leading-relaxed">
+          <p id="letter-salutation" contenteditable="false" class="font-semibold text-2xl text-rosegoldDark">
+            Mi amor,
+          </p>
+          <div id="letter-body" contenteditable="false" class="space-y-4">
+            <p>
+              Hoy el mundo celebra el día en que naciste, pero el verdadero regalo lo tengo yo por poder caminar a tu lado, reír contigo y compartir tantos momentos inolvidables.
+            </p>
+            <p>
+              Admiro tu forma de ver la vida, tu ternura, tu fuerza y esa sonrisa capaz de arreglar cualquier día gris. Gracias por ser mi compañera, mi mejor amiga y mi lugar favorito en el mundo.
+            </p>
+            <p>
+              Deseo que este nuevo año de vida te traiga toda la felicidad que mereces, sueños cumplidos y miles de aventuras juntos. ¡Feliz cumpleaños, preciosa!
+            </p>
+          </div>
+          <div class="pt-4">
+            <p id="letter-signoff" contenteditable="false" class="italic text-burgundyLight">Con todo mi amor,</p>
+            <p id="letter-signature" contenteditable="false" class="font-script text-3xl sm:text-4xl text-rosegoldDark mt-1">Tu novio ❤️</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 4. RAZONES POR LAS QUE TE AMO ==================== -->
+  <section id="razones" class="relative py-20 px-4 sm:px-8 max-w-5xl mx-auto z-10">
+    <div class="text-center max-w-2xl mx-auto mb-12 reveal">
+      <span class="font-script text-3xl text-rosegoldDark">Pequeños detalles</span>
+      <h2 class="font-serif text-3xl sm:text-5xl font-bold text-burgundy mt-1">Razones por las que te amo</h2>
+      <p class="text-burgundyLight/85 text-sm sm:text-base mt-2">Toca cada tarjeta para descubrir lo que siento por ti</p>
+    </div>
+
+    <div id="reasons-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 reveal">
+      <!-- Tarjetas generadas dinámicamente -->
+    </div>
+  </section>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="py-12 px-4 text-center border-t border-petal/60 bg-blush/30 relative z-10">
+    <div class="max-w-lg mx-auto space-y-3">
+      <div class="flex items-center justify-center gap-2 text-rosegoldDark">
+        <i data-lucide="heart" class="w-4 h-4 fill-rosegold"></i>
+        <i data-lucide="heart" class="w-5 h-5 fill-rosegoldDark"></i>
+        <i data-lucide="heart" class="w-4 h-4 fill-rosegold"></i>
+      </div>
+      <p id="footer-text" contenteditable="false" class="font-serif italic text-lg text-burgundy">
+        Por este cumpleaños y todos los que nos quedan por celebrar juntos.
+      </p>
+      <p class="text-xs text-burgundyLight/70">Hecho especialmente para ti</p>
+    </div>
+  </footer>
+
+  <!-- ==================== LÓGICA JAVASCRIPT ==================== -->
+  <script>
+    // Recuerdos iniciales con las fotos locales de nuestra galería
+    let memories = [
+      {
+        id: 'photo-1',
+        isSample: false,
+        src: 'img/foto1.jpg',
+        date: 'Celebrando juntos',
+        caption: 'Cada celebración contigo se vuelve inolvidable ✨',
+        rotation: '-2deg'
+      },
+      {
+        id: 'photo-2',
+        isSample: false,
+        src: 'img/foto2.jpg',
+        date: 'Momentos a tu lado',
+        caption: 'Contigo hasta los instantes simples tienen magia 💕',
+        rotation: '1.5deg'
+      }
+    ];
+
+    // Razones por las que te amo
+    const reasons = [
+      {
+        number: '01',
+        frontTitle: 'Tu sonrisa',
+        backText: 'Porque basta verte sonreír para que cualquier preocupación desaparezca al instante.'
+      },
+      {
+        number: '02',
+        frontTitle: 'Tu corazón',
+        backText: 'Por la bondad, dulzura y cariño genuino con el que cuidas a quienes amas.'
+      },
+      {
+        number: '03',
+        frontTitle: 'Nuestras risas',
+        backText: 'Porque contigo hasta el momento más sencillo se convierte en una anécdota inolvidable.'
+      },
+      {
+        number: '04',
+        frontTitle: 'Tu apoyo',
+        backText: 'Por creer en mí, escucharme siempre y ser mi mayor inspiración cada día.'
+      },
+      {
+        number: '05',
+        frontTitle: 'Tu mirada',
+        backText: 'Porque cuando me miras siento que estoy exactamente donde quiero estar toda la vida.'
+      },
+      {
+        number: '06',
+        frontTitle: 'Ser tú misma',
+        backText: 'Por tu autenticidad, tu fuerza y todo lo que te hace única en este mundo.'
+      }
+    ];
+
+    let isEditMode = false;
+
+    // Inicialización al cargar
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      createFloatingHearts();
+      renderGallery();
+      renderReasons();
+      setupScrollReveal();
+      
+      // Pequeño confeti de bienvenida sutil tras 600ms
+      setTimeout(() => {
+        confetti({
+          particleCount: 45,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#D48C95', '#F8D7DC', '#B86B77', '#FDE047']
+        });
+      }, 600);
+
+      const song = document.getElementById('birthday-song');
+      const startSongOnInteraction = () => {
+        song.play().then(() => {
+          musicPlaying = true;
+          document.getElementById('music-label').textContent = 'Pausar nuestra canción';
+        }).catch(() => {});
+        document.removeEventListener('pointerdown', startSongOnInteraction);
+        document.removeEventListener('keydown', startSongOnInteraction);
+      };
+      document.addEventListener('pointerdown', startSongOnInteraction, { once: true });
+      document.addEventListener('keydown', startSongOnInteraction, { once: true });
+    });
+
+    // 1. Generar corazones flotantes de fondo
+    function createFloatingHearts() {
+      const container = document.getElementById('hearts-container');
+      const heartSymbols = ['♥', '♡', '❤'];
+      const count = 16;
+
+      for (let i = 0; i < count; i++) {
+        const span = document.createElement('span');
+        span.className = 'floating-heart text-rosegold/40 select-none';
+        span.textContent = heartSymbols[i % heartSymbols.length];
+        span.style.left = `${Math.random() * 100}vw`;
+        span.style.fontSize = `${14 + Math.random() * 18}px`;
+        span.style.animationDuration = `${12 + Math.random() * 14}s`;
+        span.style.animationDelay = `${Math.random() * 10}s`;
+        container.appendChild(span);
+      }
+    }
+
+    // 2. Celebración con confeti y corazones
+    function launchCelebration() {
+      const duration = 2200;
+      const end = Date.now() + duration;
+      const colors = ['#D48C95', '#B86B77', '#F8D7DC', '#FFD1DC', '#F59E0B'];
+
+      (function frame() {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: colors
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: colors
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
+
+      showToast('¡Feliz cumpleaños, mi vida! 🎉❤️');
+    }
+
+    // 3. Renderizar Galería Polaroid
+    function renderGallery() {
+      const grid = document.getElementById('gallery-grid');
+
+      grid.innerHTML = memories.map((item, index) => `
+        <div class="polaroid-card rounded-2xl relative group" style="transform: rotate(${item.rotation});">
+          <!-- Botón eliminar foto (solo visible en Modo Edición) -->
+          <button onclick="removeMemory('${item.id}')" title="Eliminar foto" class="edit-only-control ${isEditMode ? 'flex' : 'hidden'} absolute -top-3 -right-3 z-20 w-8 h-8 rounded-full bg-burgundy text-white items-center justify-center shadow-md hover:bg-red-600 transition">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+
+          <div class="aspect-[4/5] w-full overflow-hidden rounded-xl bg-blush relative">
+            <img 
+              src="${item.src}" 
+              alt="${item.caption}" 
+              onerror="this.src='https://placehold.co/600x750/FCEEF0/4A1E28?text=Nuestro+Recuerdo'"
+              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+          </div>
+
+          <div class="pt-4 px-1 text-center space-y-1">
+            <span 
+              contenteditable="${isEditMode}" 
+              onblur="updateMemoryText('${item.id}', 'date', this.innerText)"
+              class="block text-[11px] uppercase tracking-widest text-rosegoldDark font-semibold"
+            >${item.date}</span>
+            <p 
+              contenteditable="${isEditMode}" 
+              onblur="updateMemoryText('${item.id}', 'caption', this.innerText)"
+              class="font-serif text-lg text-burgundy leading-snug"
+            >${item.caption}</p>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function removeMemory(id) {
+      memories = memories.filter(m => m.id !== id);
+      renderGallery();
+      showToast('Recuerdo eliminado');
+    }
+
+    function updateMemoryText(id, field, value) {
+      const mem = memories.find(m => m.id === id);
+      if (mem) {
+        mem[field] = value.trim();
+      }
+    }
+
+
+    // 4. Carta interactiva
+    function openLetter() {
+      document.getElementById('envelope-closed').classList.add('hidden');
+      const opened = document.getElementById('letter-opened');
+      opened.classList.remove('hidden');
+      
+      confetti({
+        particleCount: 35,
+        spread: 60,
+        origin: { y: 0.7 },
+        colors: ['#D48C95', '#F8D7DC', '#B86B77']
+      });
+    }
+
+    function closeLetter() {
+      document.getElementById('letter-opened').classList.add('hidden');
+      document.getElementById('envelope-closed').classList.remove('hidden');
+    }
+
+    // 5. Renderizar Razones por las que te amo (Flip Cards)
+    function renderReasons() {
+      const grid = document.getElementById('reasons-grid');
+      grid.innerHTML = reasons.map((r, idx) => `
+        <div onclick="toggleFlipCard(this)" class="flip-card perspective-1000 h-56 cursor-pointer select-none">
+          <div class="flip-card-inner shadow-md hover:shadow-xl rounded-2xl">
+            <!-- Frente -->
+            <div class="flip-card-front bg-white border border-petal/80 p-6 flex flex-col items-center justify-center text-center">
+              <span class="font-serif italic text-3xl text-rosegold font-bold mb-2">${r.number}</span>
+              <h3 contenteditable="${isEditMode}" onclick="if(isEditMode) event.stopPropagation()" class="font-serif text-2xl font-semibold text-burgundy">${r.frontTitle}</h3>
+              <span class="mt-4 inline-flex items-center gap-1 text-xs text-rosegoldDark/80">
+                <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+                <span>Toca para leer</span>
+              </span>
+            </div>
+            <!-- Reverso -->
+            <div class="flip-card-back bg-gradient-to-br from-burgundy to-burgundyLight text-cream p-6 flex flex-col items-center justify-center text-center">
+              <i data-lucide="heart" class="w-5 h-5 text-petal fill-petal mb-3"></i>
+              <p contenteditable="${isEditMode}" onclick="if(isEditMode) event.stopPropagation()" class="font-serif text-lg leading-relaxed">${r.backText}</p>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function toggleFlipCard(cardEl) {
+      if (isEditMode) return; // Evitar que gire mientras se edita el texto
+      cardEl.classList.toggle('flipped');
+    }
+
+    // 6. Alternar Modo Edición para personalizar antes de mostrar/compartir
+    function toggleEditMode() {
+      isEditMode = !isEditMode;
+      document.body.classList.toggle('edit-mode', isEditMode);
+
+      const banner = document.getElementById('edit-banner');
+      const btnLabel = document.getElementById('edit-btn-label');
+
+      if (isEditMode) {
+        banner.classList.remove('hidden');
+        btnLabel.textContent = 'Finalizar edición';
+        // Abrir la carta automáticamente si está cerrada para facilitar su edición
+        openLetter();
+        showToast('Modo edición activado: edita cualquier texto');
+      } else {
+        banner.classList.add('hidden');
+        btnLabel.textContent = 'Personalizar página';
+        showToast('¡Listo! Vista limpia preparada para tu novia ❤️');
+      }
+
+      // Actualizar atributos contenteditable en textos principales
+      const editableIds = [
+        'hero-badge', 'hero-title', 'hero-name', 'hero-subtitle',
+        'gallery-heading', 'gallery-subheading',
+        'letter-date', 'letter-salutation', 'letter-body', 'letter-signoff', 'letter-signature',
+        'footer-text'
+      ];
+
+      editableIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('contenteditable', isEditMode ? 'true' : 'false');
+      });
+
+      renderGallery();
+      renderReasons();
+    }
+
+    let musicPlaying = false;
+    function toggleMusic() {
+      const song = document.getElementById('birthday-song');
+      const label = document.getElementById('music-label');
+
+      if (!musicPlaying) {
+        song.play().then(() => {
+          label.textContent = 'Pausar nuestra canción';
+          musicPlaying = true;
+        }).catch(() => {
+          showToast('No se pudo reproducir la canción');
+        });
+      } else {
+        song.pause();
+        label.textContent = 'Reproducir nuestra canción';
+        musicPlaying = false;
+      }
+    }
+
+    // 7. Animaciones al hacer scroll
+    function setupScrollReveal() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.12 });
+
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    }
+
+    // Notificación Toast amigable
+    let toastTimeout;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      toastMsg.textContent = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 3200);
+    }
+  </script>
+</body>
+</html>
